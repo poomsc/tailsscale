@@ -1,0 +1,21 @@
+services:
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: tailscale-personal
+    hostname: mac-personal
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+    ports:
+      - "1055:1055"
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=true
+      - TS_SOCKS5_SERVER=:1055
+      - TS_EXTRA_ARGS=--accept-dns=false
+    restart: unless-stopped
+
+volumes:
+  tailscale-state:
