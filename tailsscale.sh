@@ -380,23 +380,52 @@ cmd_refresh() {
     echo -e "${GREEN}✅ Routes refreshed.${NC}"
 }
 
+cmd_setup_alias() {
+    local ZSHRC="$HOME/.zshrc"
+    local ALIAS_MARKER="# tailsscale alias"
+    local SCRIPT_ABS_PATH="$SCRIPT_DIR/tailsscale.sh"
+
+    # Remove old alias if exists
+    if grep -q "$ALIAS_MARKER" "$ZSHRC" 2>/dev/null; then
+        sed -i '' "/$ALIAS_MARKER/,/# end tailsscale alias/d" "$ZSHRC"
+        echo -e "${YELLOW}Updating existing alias...${NC}"
+    fi
+
+    cat >> "$ZSHRC" <<EOF
+
+$ALIAS_MARKER
+alias tailsscale='$SCRIPT_ABS_PATH'
+# end tailsscale alias
+EOF
+
+    echo -e "${GREEN}✅ Alias installed!${NC}"
+    echo ""
+    echo "Run 'source ~/.zshrc' or restart terminal, then use:"
+    echo "  tailsscale up"
+    echo "  tailsscale down"
+    echo "  tailsscale status"
+    echo "  tailsscale refresh"
+}
+
 # ── Main ──────────────────────────────────────────────────────────
 
 case "${1:-help}" in
-    up|start)    cmd_up ;;
-    down|stop)   cmd_down ;;
-    status|st)   cmd_status ;;
-    refresh|re)  cmd_refresh ;;
+    up|start)        cmd_up ;;
+    down|stop)       cmd_down ;;
+    status|st)       cmd_status ;;
+    refresh|re)      cmd_refresh ;;
+    setup-alias)     cmd_setup_alias ;;
     *)
         echo "Personal Tailscale VPN — transparent dual-account routing"
         echo ""
-        echo "Usage: $0 {up|down|status|refresh}"
+        echo "Usage: $0 {up|down|status|refresh|setup-alias}"
         echo ""
         echo "Commands:"
-        echo "  up       Start personal Tailscale with transparent IP routing"
-        echo "  down     Stop everything and clean up routes"
-        echo "  status   Show connection status and peers"
-        echo "  refresh  Re-sync peer routes (run when peers change)"
+        echo "  up            Start personal Tailscale with transparent IP routing"
+        echo "  down          Stop everything and clean up routes"
+        echo "  status        Show connection status and peers"
+        echo "  refresh       Re-sync peer routes (run when peers change)"
+        echo "  setup-alias   Install 'tailsscale' as a global command"
         echo ""
         echo "Prerequisites:"
         echo "  - Docker Desktop running"

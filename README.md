@@ -17,24 +17,32 @@ brew install tun2proxy
 
 Docker Desktop must be running.
 
+## Setup
+
+```bash
+# Install global alias (one-time)
+./tailsscale.sh setup-alias
+source ~/.zshrc
+```
+
 ## Usage
 
 ```bash
 # Start (first run will prompt for Tailscale login)
-./tailsscale.sh up
+tailsscale up
 
 # Access personal devices directly — no proxy needed
 ssh pi@100.120.114.68
 curl http://100.115.142.80:8080
 
 # Check status
-./tailsscale.sh status
+tailsscale status
 
 # Re-sync routes when peers change
-./tailsscale.sh refresh
+tailsscale refresh
 
 # Stop
-./tailsscale.sh down
+tailsscale down
 ```
 
 ## Files
