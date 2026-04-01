@@ -400,11 +400,13 @@ EOF
 
     echo -e "${GREEN}✅ Alias installed!${NC}"
     echo ""
-    echo "Run 'source ~/.zshrc' or restart terminal, then use:"
+    echo "You can now use:"
     echo "  tailsscale up"
     echo "  tailsscale down"
     echo "  tailsscale status"
     echo "  tailsscale refresh"
+
+    source "$ZSHRC"
 }
 
 # ── Main ──────────────────────────────────────────────────────────
