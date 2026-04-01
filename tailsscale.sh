@@ -1,5 +1,5 @@
 #!/bin/bash
-# vpn-personal.sh - Manage personal Tailscale with transparent IP routing
+# tailsscale.sh - Manage personal Tailscale with transparent IP routing
 #
 # Enables running two Tailscale accounts simultaneously on macOS:
 # - Work Tailscale: runs natively (Headscale)
@@ -12,7 +12,7 @@
 #   4. /32 routes are more specific than work Tailscale's /10 route, so macOS
 #      automatically sends personal traffic through tun2proxy
 #
-# Usage: ./vpn-personal.sh {up|down|status|refresh}
+# Usage: ./tailsscale.sh {up|down|status|refresh}
 #
 # Prerequisites: brew install tun2proxy
 
@@ -20,10 +20,10 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SOCKS5_PORT=1055
-CONTAINER_NAME="tailscale-personal"
+CONTAINER_NAME="tailsscale"
 PID_FILE="/tmp/tun2proxy-personal.pid"
 TUN_IF_FILE="/tmp/tun2proxy-personal-iface.txt"
-ROUTES_FILE="/tmp/tailscale-personal-routes.txt"
+ROUTES_FILE="/tmp/tailsscale-routes.txt"
 
 # Point-to-point addresses for the TUN interface (RFC 2544 benchmark range)
 TUN_LOCAL="198.18.0.1"
@@ -97,7 +97,7 @@ add_routes() {
 
     if [ -z "$peer_ips" ]; then
         echo -e "${YELLOW}No personal Tailscale peers found.${NC}"
-        echo "  Is the container connected? Check: ./vpn-personal.sh status"
+        echo "  Is the container connected? Check: ./tailsscale.sh status"
         return
     fi
 
@@ -257,9 +257,9 @@ cmd_up() {
     echo "  Personal Tailscale IPs are now directly accessible — no proxy needed."
     echo ""
     echo "  Commands:"
-    echo "    ./vpn-personal.sh status   — show connection status"
-    echo "    ./vpn-personal.sh refresh  — re-sync peer routes"
-    echo "    ./vpn-personal.sh down     — disconnect everything"
+    echo "    ./tailsscale.sh status   — show connection status"
+    echo "    ./tailsscale.sh refresh  — re-sync peer routes"
+    echo "    ./tailsscale.sh down     — disconnect everything"
 }
 
 cmd_down() {
@@ -304,7 +304,7 @@ cmd_status() {
     else
         echo -e "  Container:   ${RED}stopped${NC}"
         echo ""
-        echo "Run './vpn-personal.sh up' to start."
+        echo "Run './tailsscale.sh up' to start."
         return
     fi
 
@@ -358,14 +358,14 @@ cmd_status() {
 
 cmd_refresh() {
     if ! is_container_running; then
-        echo -e "${RED}Container not running. Run './vpn-personal.sh up' first.${NC}"
+        echo -e "${RED}Container not running. Run './tailsscale.sh up' first.${NC}"
         exit 1
     fi
 
     local tun_if
     tun_if=$(get_tun_interface)
     if [ -z "$tun_if" ]; then
-        echo -e "${RED}TUN interface not found. Run './vpn-personal.sh up' first.${NC}"
+        echo -e "${RED}TUN interface not found. Run './tailsscale.sh up' first.${NC}"
         exit 1
     fi
 

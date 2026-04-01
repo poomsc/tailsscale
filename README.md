@@ -1,4 +1,4 @@
-# Tailscale Personal VPN
+# Tailsscale (The Tails of Tailscale)
 
 Run two Tailscale accounts simultaneously on macOS — work (native) and personal (Docker) — with transparent IP routing.
 
@@ -21,25 +21,25 @@ Docker Desktop must be running.
 
 ```bash
 # Start (first run will prompt for Tailscale login)
-./vpn-personal.sh up
+./tailsscale.sh up
 
 # Access personal devices directly — no proxy needed
 ssh pi@100.120.114.68
 curl http://100.115.142.80:8080
 
 # Check status
-./vpn-personal.sh status
+./tailsscale.sh status
 
 # Re-sync routes when peers change
-./vpn-personal.sh refresh
+./tailsscale.sh refresh
 
 # Stop
-./vpn-personal.sh down
+./tailsscale.sh down
 ```
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `vpn-personal.sh` | Main script — manages container, tun2proxy, and routes |
+| `tailsscale.sh` | Main script — manages container, tun2proxy, and routes |
 | `docker-compose.yml` | Personal Tailscale container with SOCKS5 proxy on port 1055 |
