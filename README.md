@@ -42,6 +42,9 @@ tailsscale refresh
 
 # Stop
 tailsscale down
+
+# Uninstall (removes alias, stops services, cleans up)
+tailsscale uninstall
 ```
 
 ## Files

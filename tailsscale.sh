@@ -409,6 +409,34 @@ EOF
     source "$ZSHRC"
 }
 
+cmd_uninstall() {
+    local ZSHRC="$HOME/.zshrc"
+    local ALIAS_MARKER="# tailsscale alias"
+
+    # Remove alias from zshrc
+    if grep -q "$ALIAS_MARKER" "$ZSHRC" 2>/dev/null; then
+        sed -i '' "/$ALIAS_MARKER/,/# end tailsscale alias/d" "$ZSHRC"
+        # Remove trailing blank lines left behind
+        sed -i '' -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$ZSHRC"
+        echo -e "${GREEN}✅ Alias removed from ~/.zshrc${NC}"
+        source "$ZSHRC"
+    else
+        echo -e "${YELLOW}No alias found in ~/.zshrc${NC}"
+    fi
+
+    # Stop everything if running
+    if is_container_running || is_tun2proxy_running; then
+        echo ""
+        cmd_down
+    fi
+
+    # Clean up temp files
+    sudo rm -f "$PID_FILE" "$TUN_IF_FILE" "$ROUTES_FILE" 2>/dev/null
+
+    echo ""
+    echo -e "${GREEN}✅ Uninstalled. You can safely delete this directory.${NC}"
+}
+
 # ── Main ──────────────────────────────────────────────────────────
 
 case "${1:-help}" in
@@ -417,10 +445,11 @@ case "${1:-help}" in
     status|st)       cmd_status ;;
     refresh|re)      cmd_refresh ;;
     setup-alias)     cmd_setup_alias ;;
+    uninstall)       cmd_uninstall ;;
     *)
         echo "Personal Tailscale VPN — transparent dual-account routing"
         echo ""
-        echo "Usage: $0 {up|down|status|refresh|setup-alias}"
+        echo "Usage: $0 {up|down|status|refresh|setup-alias|uninstall}"
         echo ""
         echo "Commands:"
         echo "  up            Start personal Tailscale with transparent IP routing"
@@ -428,6 +457,7 @@ case "${1:-help}" in
         echo "  status        Show connection status and peers"
         echo "  refresh       Re-sync peer routes (run when peers change)"
         echo "  setup-alias   Install 'tailsscale' as a global command"
+        echo "  uninstall     Remove alias, stop services, clean up"
         echo ""
         echo "Prerequisites:"
         echo "  - Docker Desktop running"
