@@ -2,7 +2,7 @@ services:
   tailscale:
     image: tailscale/tailscale:latest
     container_name: tailsscale
-    hostname: mac-personal
+    hostname: tailsscale-mac-air-m2
     cap_add:
       - NET_ADMIN
       - SYS_MODULE

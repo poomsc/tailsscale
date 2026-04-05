@@ -1,14 +1,14 @@
 #!/bin/bash
-# tailsscale.sh - Manage personal Tailscale with transparent IP routing
+# tailsscale.sh - Manage second Tail Tailscale with transparent IP routing
 #
 # Enables running two Tailscale accounts simultaneously on macOS:
 # - Work Tailscale: runs natively (Headscale)
-# - Personal Tailscale: runs in Docker with transparent routing via tun2proxy
+# - Second Tail Tailscale: runs in Docker with transparent routing via tun2proxy
 #
 # How it works:
-#   1. Personal Tailscale runs in Docker exposing a SOCKS5 proxy (port 1055)
+#   1. Second Tail Tailscale runs in Docker exposing a SOCKS5 proxy (port 1055)
 #   2. tun2proxy creates a TUN interface connected to that SOCKS5 proxy
-#   3. /32 routes for personal Tailscale peer IPs route through the TUN
+#   3. /32 routes for second Tail Tailscale peer IPs route through the TUN
 #   4. /32 routes are more specific than work Tailscale's /10 route, so macOS
 #      automatically sends personal traffic through tun2proxy
 #
@@ -64,7 +64,7 @@ get_tun_interface() {
     fi
 }
 
-# Get all IPv4 peer IPs from personal Tailscale
+# Get all IPv4 peer IPs from second Tail Tailscale
 get_peer_ips() {
     docker exec "$CONTAINER_NAME" tailscale status --json 2>/dev/null | \
         python3 -c "
@@ -78,7 +78,7 @@ for key, peer in peers.items():
 " 2>/dev/null || true
 }
 
-# Get this node's own personal Tailscale IP
+# Get this node's own second Tail Tailscale IP
 get_self_ip() {
     docker exec "$CONTAINER_NAME" tailscale status --json 2>/dev/null | \
         python3 -c "
@@ -96,7 +96,7 @@ add_routes() {
     peer_ips=$(get_peer_ips)
 
     if [ -z "$peer_ips" ]; then
-        echo -e "${YELLOW}No personal Tailscale peers found.${NC}"
+        echo -e "${YELLOW}No second Tail Tailscale peers found.${NC}"
         echo "  Is the container connected? Check: ./tailsscale.sh status"
         return
     fi
@@ -116,7 +116,7 @@ add_routes() {
         ((count++))
     done <<< "$peer_ips"
 
-    echo -e "${GREEN}Routed $count personal Tailscale peer(s).${NC}"
+    echo -e "${GREEN}Routed $count second Tail Tailscale peer(s).${NC}"
 }
 
 remove_routes() {
@@ -148,7 +148,7 @@ cmd_up() {
     require_tun2proxy
 
     echo -e "${BLUE}============================================${NC}"
-    echo -e "${BLUE}  Starting Personal Tailscale VPN           ${NC}"
+    echo -e "${BLUE}  Starting Second Tail Tailscale VPN           ${NC}"
     echo -e "${BLUE}============================================${NC}"
     echo ""
 
@@ -169,12 +169,12 @@ cmd_up() {
 
     if echo "$STATUS" | grep -q "NeedsLogin\|Logged out\|not logged in"; then
         echo "  Authentication required — generating login URL..."
-        docker exec "$CONTAINER_NAME" tailscale up 2>&1 &
+        docker exec "$CONTAINER_NAME" tailscale up --accept-dns=false 2>&1 &
         UP_PID=$!
 
         URL=""
         for i in $(seq 1 30); do
-            URL=$(docker logs "$CONTAINER_NAME" 2>&1 | grep -o 'https://login.tailscale.com/[^ ]*' | tail -1)
+            URL=$(docker logs --since 5s "$CONTAINER_NAME" 2>&1 | grep -o 'https://login.tailscale.com/[^ ]*' | tail -1)
             if [ -n "$URL" ]; then
                 echo ""
                 echo -e "  ${GREEN}Open this URL to authenticate:${NC}"
@@ -182,6 +182,14 @@ cmd_up() {
                 echo ""
                 echo "  Waiting for authentication..."
                 wait $UP_PID 2>/dev/null || true
+
+                # Verify actually authenticated
+                local verify_status
+                verify_status=$(docker exec "$CONTAINER_NAME" tailscale status 2>&1 || true)
+                if echo "$verify_status" | grep -q "NeedsLogin\|Logged out\|not logged in"; then
+                    echo -e "${RED}Authentication failed or timed out.${NC}"
+                    exit 1
+                fi
                 echo -e "  ${GREEN}Authenticated!${NC}"
                 break
             fi
@@ -190,7 +198,7 @@ cmd_up() {
 
         if [ -z "$URL" ]; then
             echo -e "${RED}Could not get login URL. Run manually:${NC}"
-            echo "  docker exec $CONTAINER_NAME tailscale up"
+            echo "  docker exec $CONTAINER_NAME tailscale up --accept-dns=false"
             exit 1
         fi
     else
@@ -202,7 +210,7 @@ cmd_up() {
         echo -e "${YELLOW}[3/4] tun2proxy already running — refreshing routes...${NC}"
         cmd_refresh
         echo ""
-        echo -e "${GREEN}✅ Personal Tailscale VPN is running!${NC}"
+        echo -e "${GREEN}✅ Second Tail Tailscale VPN is running!${NC}"
         return
     fi
 
@@ -243,21 +251,21 @@ cmd_up() {
     sudo ifconfig "$TUN_IF" "$TUN_LOCAL" "$TUN_GW" up
     echo -e "  ${GREEN}Configured: $TUN_LOCAL ↔ $TUN_GW${NC}"
 
-    # 4. Add routes for personal Tailscale peers
-    echo -e "${YELLOW}[4/4] Adding routes for personal Tailscale peers...${NC}"
+    # 4. Add routes for second Tail Tailscale peers
+    echo -e "${YELLOW}[4/4] Adding routes for second Tail Tailscale peers...${NC}"
     add_routes
 
     SELF_IP=$(get_self_ip)
     echo ""
     echo -e "${GREEN}============================================${NC}"
-    echo -e "${GREEN}  ✅ Personal Tailscale VPN is running!     ${NC}"
+    echo -e "${GREEN}  ✅ Second Tail Tailscale VPN is running!     ${NC}"
     echo -e "${GREEN}============================================${NC}"
     echo ""
     echo -e "  This node:      ${BLUE}${SELF_IP:-unknown}${NC}"
     echo -e "  TUN interface:  ${BLUE}$TUN_IF${NC}"
     echo -e "  SOCKS5 proxy:   ${BLUE}socks5://localhost:$SOCKS5_PORT${NC} (also available)"
     echo ""
-    echo "  Personal Tailscale IPs are now directly accessible — no proxy needed."
+    echo "  Second Tail Tailscale IPs are now directly accessible — no proxy needed."
     echo ""
     echo "  Commands:"
     echo "    ./tailsscale.sh status   — show connection status"
@@ -266,7 +274,7 @@ cmd_up() {
 }
 
 cmd_down() {
-    echo -e "${BLUE}Stopping Personal Tailscale VPN...${NC}"
+    echo -e "${BLUE}Stopping Second Tail Tailscale VPN...${NC}"
     echo ""
 
     # 1. Remove routes
@@ -294,11 +302,11 @@ cmd_down() {
     docker compose down
 
     echo ""
-    echo -e "${GREEN}✅ Personal Tailscale VPN stopped.${NC}"
+    echo -e "${GREEN}✅ Second Tail Tailscale VPN stopped.${NC}"
 }
 
 cmd_status() {
-    echo -e "${BLUE}Personal Tailscale VPN Status${NC}"
+    echo -e "${BLUE}Second Tail Tailscale VPN Status${NC}"
     echo "──────────────────────────────────"
 
     # Docker container
@@ -449,12 +457,12 @@ case "${1:-help}" in
     setup-alias)     cmd_setup_alias ;;
     uninstall)       cmd_uninstall ;;
     *)
-        echo "Personal Tailscale VPN — transparent dual-account routing"
+        echo "Second Tail Tailscale VPN — transparent dual-account routing"
         echo ""
         echo "Usage: $0 {up|down|status|refresh|setup-alias|uninstall}"
         echo ""
         echo "Commands:"
-        echo "  up            Start personal Tailscale with transparent IP routing"
+        echo "  up            Start Second Tail Tailscale with transparent IP routing"
         echo "  down          Stop everything and clean up routes"
         echo "  status        Show connection status and peers"
         echo "  refresh       Re-sync peer routes (run when peers change)"

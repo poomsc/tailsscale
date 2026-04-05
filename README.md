@@ -5,7 +5,7 @@ Run two Tailscale accounts simultaneously on macOS — work (native) and persona
 ## How it works
 
 - Work Tailscale runs natively on macOS (Headscale)
-- Personal Tailscale runs in Docker with a SOCKS5 proxy
+- Second Tailscale (Personal Tailscale) runs in Docker with a SOCKS5 proxy
 - `tun2proxy` creates a TUN interface connected to that proxy
 - Per-peer `/32` routes override work Tailscale's `/10` route, so macOS automatically sends traffic to the right network
 
