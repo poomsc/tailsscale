@@ -133,7 +133,10 @@ remove_routes() {
 wait_for_tailscale() {
     local max_wait=15
     for i in $(seq 1 $max_wait); do
-        if docker exec "$CONTAINER_NAME" tailscale status &>/dev/null; then
+        # tailscale status exits non-zero when not logged in, so also check
+        # if the daemon is responding at all via the socket
+        if docker exec "$CONTAINER_NAME" tailscale status &>/dev/null || \
+           docker exec "$CONTAINER_NAME" tailscale status 2>&1 | grep -qE "NeedsLogin|Logged out|not logged in"; then
             return 0
         fi
         sleep 1
