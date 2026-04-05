@@ -405,8 +405,8 @@ EOF
     echo "  tailsscale down"
     echo "  tailsscale status"
     echo "  tailsscale refresh"
-
-    source "$ZSHRC"
+    echo ""
+    echo "Run 'source ~/.zshrc' or open a new terminal to activate."
 }
 
 cmd_uninstall() {
@@ -419,7 +419,6 @@ cmd_uninstall() {
         # Remove trailing blank lines left behind
         sed -i '' -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$ZSHRC"
         echo -e "${GREEN}✅ Alias removed from ~/.zshrc${NC}"
-        source "$ZSHRC"
     else
         echo -e "${YELLOW}No alias found in ~/.zshrc${NC}"
     fi

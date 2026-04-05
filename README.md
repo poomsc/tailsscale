@@ -22,6 +22,7 @@ Docker Desktop must be running.
 ```bash
 # Install global alias (one-time)
 ./tailsscale.sh setup-alias
+source ~/.zshrc
 ```
 
 ## Usage
